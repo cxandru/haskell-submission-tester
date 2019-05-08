@@ -28,12 +28,11 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     # src has ghc-option -XSafe.
     # process xml test output
 
-    #We symlink the submission to the stack dir. Use subprocess in order to replace symlink if already there. This might not really be necessary...
-    os.system("ln -snf {hw_exc} {stack_dest}".format(
-        hw_exc = quote(abs_path_to_exc),
-        stack_dest = quote(join(stack_project_root_path, 'src', 'S.hs'))
-        )
-    )
+    destination_link = join(stack_project_root_path, "src", "S.hs")
+    if isfile(destination_link): os.remove(destination_link)
+    os.symlink(abs_path_to_exc, destination_link)
+
+    #pushd
     prev_dir= os.getcwd()
     os.chdir(stack_project_root_path)
     try:
@@ -49,7 +48,7 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
                                         , stderr=subprocess.STDOUT
                                         , timeout=80 )
         with open(msg_file, 'w') as msg_fh:
-            msg_fh.write(xml_to_corrector_string(xml_file, exc_name))
+            #msg_fh.write(xml_to_corrector_string(xml_file, exc_name))
         return None
     except subprocess.CalledProcessError as e: #=nonzero exit code during compilation
         err = prettify_err_msg(e.output.decode("utf-8"), intermediate_dir)    

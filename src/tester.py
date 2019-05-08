@@ -14,7 +14,6 @@ from checker import gradeExcForSubmissionRetMaybeErr
 debug = True
 ######################################
 
-
 def reset(intermediate_dir):
     """ removes all .msg files from the intermediate_dir"""
     files = glob(join(intermediate_dir, '*.(msg|xml)')) #TODO:See if this works
@@ -79,7 +78,7 @@ def submissionsFunc(directory):
 
 def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack_name_d_eval_file):
     """
-    submissions_dir.. should be empty, except for submissions! #TODO check this
+    If the directories already exist
     Copies the submissions_dir to dirs 'Intermediate_Files', 'Results', located in
     submissions_dir/.. ;  
     Copies the stack_projects_dir to 'Tests' in
@@ -94,27 +93,20 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
         results_dir = join(root_dir, 'Results')
         stack_projects_dir = join(root_dir, 'Tests')
 
-        copytree(submissions_dir, results_dir)
-        copytree(submissions_dir, intermediate_dir)
-        copytree(reference_stack_projects_dir, stack_projects_dir)
+        if not isdir(results_dir) copytree(submissions_dir, results_dir)
+        if not isdir(intermediate_dir) copytree(submissions_dir, intermediate_dir)
+        if not isdir(stack_projects_dir) copytree(reference_stack_projects_dir, stack_projects_dir)
 
-        normalize_exc_submissions(intermediate_dir)
+        if not isdir(intermediate_dir) normalize_exc_submissions(intermediate_dir)
         
         
         exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file)
-        
 
         return ExerciseGradingContext(intermediate_dir, results_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d)
     except Exception as e:
         print(e)
         resetEnvironmentStatic(submissions_dir)
-       
 
-def resetEnvironmentStatic(submissions_dir):
-    os.system("find {root_dir} -mindepth 1 ! -path '*{submissions_basename}*' -delete".format(
-        root_dir=quote(dirname(submissions_dir))
-        , submissions_basename=quote(basename(submissions_dir)))
-    )
 
 
 
@@ -159,12 +151,6 @@ class ExerciseGradingContext:
                 print(maybeErr + "in submission " + abs_path_to_exc)
             else:
                 print("submission "+ abs_path_to_exc + "correct!")
-
-    def resetEnvironment(self):
-        """can be called to leave behind a clean environment when exiting.
-        """
-        resetEnvironmentStatic(self.submissions_dir)
-
 
 
 

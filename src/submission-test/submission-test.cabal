@@ -1,0 +1,76 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.1.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: fde3a5790e9a8c8a7c40338ee94b64b4901bc5327d6d0cf05118d5ef56d8faff
+
+name:           submission-test
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/submission-test#readme>
+homepage:       https://github.com/githubuser/submission-test#readme
+bug-reports:    https://github.com/githubuser/submission-test/issues
+author:         Gregor Cassian Alexandru
+maintainer:     example@example.com
+copyright:      2019 Gregor Cassian Alexandru
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/submission-test
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_submission_test
+  hs-source-dirs:
+      src
+  ghc-options: -XSafe
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010
+
+test-suite a
+  type: exitcode-stdio-1.0
+  main-is: a.hs
+  other-modules:
+      Spec
+      Paths_submission_test
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , submission-test
+    , tasty
+    , tasty-ant-xml
+    , tasty-hunit
+    , tasty-quickcheck
+    , tasty-smallcheck
+  default-language: Haskell2010
+
+test-suite default
+  type: exitcode-stdio-1.0
+  main-is: test.hs
+  other-modules:
+      Spec
+      Paths_submission_test
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , submission-test
+    , tasty
+    , tasty-ant-xml
+    , tasty-hunit
+    , tasty-quickcheck
+    , tasty-smallcheck
+  default-language: Haskell2010
