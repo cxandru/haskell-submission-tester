@@ -9,17 +9,19 @@ from glob import glob
 from sys import argv,stderr,exit
 from normalizer import normalize_exc_submissions
 from checker import gradeExcForSubmissionRetMaybeErr
+from itertools import chain
 
 #################global var#############
 debug = True
 ######################################
 
-def reset(intermediate_dir):
+def resetStatic(intermediate_dir, submissions):
     """ removes all .msg files from the intermediate_dir"""
-    files = glob(join(intermediate_dir, '*.(msg|xml)')) #TODO:See if this works
-    for f in files:
+    files = [glob(join(intermediate_dir,submission, '*.msg')) + glob(join(intermediate_dir,submission, '*.xml')) for submission in submissions]
+    for f in chain.from_iterable(files):
         if isfile(f):
-            os.remove(f)
+            if debug: print(f)
+            remove(f)
 
 def exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file):
     """reads in a map of the form {<exc_base_name> : ([<sub_exc_name>], <stack_project_root>)}"""
@@ -91,13 +93,15 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
         root_dir = dirname(submissions_dir)
         intermediate_dir = join(root_dir,'Intermediate_Files')
         results_dir = join(root_dir, 'Results')
-        stack_projects_dir = join(root_dir, 'Tests')
+        stack_projects_dir = join(root_dir, 'Test_Execution')
 
-        if not isdir(results_dir) copytree(submissions_dir, results_dir)
-        if not isdir(intermediate_dir) copytree(submissions_dir, intermediate_dir)
-        if not isdir(stack_projects_dir) copytree(reference_stack_projects_dir, stack_projects_dir)
-
-        if not isdir(intermediate_dir) normalize_exc_submissions(intermediate_dir)
+        if not isdir(results_dir): copytree(submissions_dir, results_dir)
+        if not isdir(intermediate_dir):
+            copytree(submissions_dir, intermediate_dir)
+            normalize_exc_submissions(intermediate_dir)
+        #todo: use find to recursively symlink all dirs except for src, which we copy.
+        #This means we react to changes in the original test dir, but don't overwrite src, which is important.
+        if not isdir(stack_projects_dir): copytree(reference_stack_projects_dir, stack_projects_dir)
         
         
         exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file)
@@ -105,9 +109,7 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
         return ExerciseGradingContext(intermediate_dir, results_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d)
     except Exception as e:
         print(e)
-        resetEnvironmentStatic(submissions_dir)
-
-
+        os.rmtree(intermediate_dir)
 
 
 class ExerciseGradingContext:
@@ -152,75 +154,32 @@ class ExerciseGradingContext:
             else:
                 print("submission "+ abs_path_to_exc + "correct!")
 
-
-
-
-# for submission in submissions: #this line is optional
-#     # write message(s) to "korrektur_xy"-file:
-#     korr_file=join(result_dir, submission, 'bewertung_%s.txt'%submission)
-#     msg = ""
-#     for exercise in testable_exercises_basenames_hs:
-#         full_name=exercise[:-3]
-#         msg_file=join(intermediate_dir, submission, full_name+'.msg')
-        
-#         if isfile(msg_file):
-#             with open(msg_file, 'r') as msg_fh:
-#                 msg+=msg_fh.read()
-#         else:
-#             msg+="Tests for %s failed: file %s not found!\n"% (full_name, exercise)
-
-#     if isfile(korr_file):
-#         with open(korr_file, 'r') as korr_in:
-#             korr=korr_in.read()
-#         with open(korr_file, 'w') as korr_out:
-#             adc=r'(Kommentare:)|(=========== Beginn der Kommentare ===========)'
-#             edc='============ Ende der Kommentare ============\n'
-#             startMatch=re.search(adc, korr)
-#             if startMatch.end()<0:
-#                 print("ERROR: %s malformed" % korr_file)
-#             beg=startMatch.end()
-#             korr_new=korr[:beg] + '\n' + msg + '\n' + edc
-#             korr_out.write(korr_new)
-
-
-
-# stats_comp_errors = { e:[] for e in testable_exercises_basenames_hs}
-# stats_tested = { e:[] for e in testable_exercises_basenames_hs}
-
-# if __name__ == '__main__':
-#     if len(argv)==2:
-#         if argv[1]=="debug":
-#             debug=True
-#         elif argv[1]=="reset":
-#             files = glob(join(intermediate_dir, '*')) + glob(join(results_dir, '*'))
-#             for f in files:
-#                 if isfile(f):
-#                     os.remove(f)
-#                 if isdir(f):
-#                     rmtree(f)
-#             exit(0)
-#         else:
-#             print(usage,file=sys.stderr)
-#             exit(1)
-
-#     if len(argv)>2:
-#         print(usage,file=sys.stderr)
-#         exit(1)
-
-
-
-
-# # clean up outside or intermediate_dir
-# #~ for f in [join(path, exercise[:-3] + suffix) for exercise in testable_exercises_basenames_hs 
-#                                              #~ for suffix in ['.hi','.o']
-#                                              #~ for path in [test_dir, solution_dir]]:
-#     #~ if exists(f):
-# os.system('rm -rf %s' % intermediate_dir)
-
-# for e in testable_exercises_basenames_hs:
-#     print("\n##### " + e + ":")
-#     print("  Does not compile (%d):"%len(stats_comp_errors[e]), stats_comp_errors[e])
-#     print("  Message written (%d):"%len(stats_tested[e]), stats_tested[e])
-
-# #untested = [s for s in submissions if s not in stats_tested[]
-# #print "\nUntested (%d):"%len(untested), untested
+    def reset(self):
+        resetStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
+    
+    def genBewewertungenFromMsgs(self):
+        for submission in self.subm_to_ep_d.keys():
+            self.concatMsgsToFinalAndRepaceResBewertungFile(submission)
+                
+    def concatMsgsToFinalAndRepaceResBewertungFile(self,submission):
+        allMsgs=""
+        #do we write if a student didn't hand in a file? 
+        for msg_f in glob(join(self.intermediate_normalized_dir,submission,'*.msg'))+glob(join(self.intermediate_normalized_dir,submission,'*.xml')):
+            with open(msg_f, mode='r') as f_in:
+                allMsgs += "\n"+ f_in.read()
+        emptyBewFile=join(self.intermediate_normalized_dir, submission ,'bewertung_{}.txt'.format(submission))
+        targetBewFile=join(self.results_dir,submission, 'bewertung_{}.txt'.format(submission))
+        if isfile(emptyBewFile):
+            with open(emptyBewFile, 'r') as b_e:
+                emptyBewContents=b_e.read()
+            adc=r'(Kommentare:)|(=========== Beginn der Kommentare ===========)'
+            #edc='============ Ende der Kommentare ============\n'#so this is usually there but we throw it away and replace it? is that the reason?
+            startMatch=re.search(adc, emptyBewContents)
+            if not startMatch or startMatch.end()<0:
+                print("ERROR: {} malformed".format(emptyBewFile))
+            beg=startMatch.end()
+            targetBewContents=emptyBewContents[:beg] + '\n' + allMsgs + '\n' #+ edc
+            
+            if isfile(targetBewFile): os.remove(targetBewFile)
+            with open(targetBewFile, 'w') as b_t:
+                b_t.write(targetBewContents)
