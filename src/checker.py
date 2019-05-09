@@ -3,8 +3,9 @@
 
 import os, subprocess, re, codecs
 from tasty_xml2msg import xml_to_corrector_string
-from os.path import join, isfile, isdir, basename, exists
+from os.path import join, isfile, isdir, basename, exists, islink
 from shlex import quote
+from shutil import copyfile
 from glob import glob
 from sys import argv,stderr,exit
 
@@ -28,16 +29,18 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     # src has ghc-option -XSafe.
     # process xml test output
 
-    destination_link = join(stack_project_root_path, "src", "S.hs")
-    if isfile(destination_link): os.remove(destination_link)
-    os.symlink(abs_path_to_exc, destination_link)
+    destinationFile = join(stack_project_root_path, "src", "S.hs")
+    #not strictly necessary with copyfile
+    if isfile(destinationFile) or islink(destinationFile): os.remove(destinationFile)
+    #we copy bc stack doesn't like symlinks.
+    copyfile(abs_path_to_exc, destinationFile)
 
     #pushd
     prev_dir= os.getcwd()
     os.chdir(stack_project_root_path)
     try:
         cmd= """
-        timeout --kill-after=20 60 stack build --test :{suitename} --test-arguments="--xml {xml_file}"
+        timeout --kill-after=20 60 stack build --force-dirty --test :{suitename} --test-arguments="--xml {xml_file}"
         """.format(
             abs_path_to_exc = abs_path_to_exc
             , xml_file = quote(xml_file)

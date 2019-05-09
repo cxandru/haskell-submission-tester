@@ -2,7 +2,7 @@
 #coding=utf-8
 
 import os, subprocess, re, codecs
-from os.path import join, isfile, isdir, basename, exists, dirname
+from os.path import join, isfile, isdir, basename, exists, dirname, islink
 from shlex import quote
 from shutil import copytree, rmtree
 from glob import glob
@@ -21,7 +21,7 @@ def resetStatic(intermediate_dir, submissions):
     for f in chain.from_iterable(files):
         if isfile(f):
             if debug: print(f)
-            remove(f)
+            os.remove(f)
 
 def exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file):
     """reads in a map of the form {<exc_base_name> : ([<sub_exc_name>], <stack_project_root>)}"""
@@ -152,7 +152,7 @@ class ExerciseGradingContext:
             if(maybeErr and debug):
                 print(maybeErr + "in submission " + abs_path_to_exc)
             else:
-                print("submission "+ abs_path_to_exc + "correct!")
+                print("submission "+ abs_path_to_exc + " correct!")
 
     def reset(self):
         resetStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
