@@ -1,0 +1,9 @@
+<?xml version='1.0' ?>
+<testsuites errors="0" failures="1" tests="1" time="0.001"><testsuite name="{S}:anteilImKreis" tests="1">
+  <testcase name="Quickcheck" time="0.000" classname="{S}anteilImKreis"><failure>*** Failed! Falsifiable (after 6 tests):
+Positive {getPositive = 4}
+0.5625 /= 0.5
+Use --quickcheck-replay=811075 --quickcheck-max-size=40 to reproduce.</failure>
+  </testcase>
+</testsuite>
+</testsuites>

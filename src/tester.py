@@ -160,7 +160,15 @@ class ExerciseGradingContext:
 
     def reset(self):
         resetStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
-    
+
+    def gradeAllExcAndWriteOut(self):
+        for exc in self.exc_to_sp_d.keys():
+            self.gradeExc(exc)
+            print("Finished grading {}".format(exc))
+        self.genBewewertungenFromMsgs()
+        print("Finished generating Bewertungen")
+
+        
     def genBewewertungenFromMsgs(self):
         for submission in self.subm_to_ep_d.keys():
             self.concatMsgsToFinalAndRepaceResBewertungFile(submission)
