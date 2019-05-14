@@ -1,0 +1,13 @@
+Building library for submission-test-0.1.0.0..
+[3 of 3] Compiling S                ( src/S.hs, .stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/S.o )
+
+/home/earendil/1LMU_SS19/ProMo/promo19-exc-submission-testing/H1/Test_Execution/kreisflaeche/src/S.hs:5:5: error: parse error on input ‘,’
+  |
+5 | GHCi, version 8.6.3: http://www.haskell.org/ghc/  :? for help
+  |     ^
+Progress 1/2
+
+--  While building package submission-test-0.1.0.0 using:
+      /home/earendil/.stack/setup-exe-cache/x86_64-linux/Cabal-simple_mPHDZzAJ_2.4.0.1_ghc-8.6.4 --builddir=.stack-work/dist/x86_64-linux/Cabal-2.4.0.1 build lib:submission-test test:anteilImKreis --ghc-options " -ddump-hi -ddump-to-file"
+    Process exited with code: ExitFailure 1
+in submission /home/earendil/1LMU_SS19/ProMo/promo19-exc-submission-testing/H1/Intermediate_Files/uwaaoeqymvpwpddg/H1-3.hs

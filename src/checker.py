@@ -53,7 +53,7 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
         return None
     except subprocess.CalledProcessError as e: #=nonzero exit code during compilation
         if not isfile(xml_file): #compilation error, not test failure
-            err = "Compilation Error:\n" + extract_compilation_err(applyBckspcChars(e.stderr.decode('utf8')), executed_target)
+            err = "Compilation Error:\n" + extract_compilation_err(applyBckspcChars(e.stderr.decode('utf8')))
             with open(msg_file, 'w') as msg_fh:
                 msg_fh.write(err)
                 return err
@@ -70,8 +70,12 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     finally:
         os.chdir(prev_dir) #popd
 
-def extract_compilation_err(stack_build_stderr_output, executed_target):
-    search_result = re.search('^{}:\d+?:\d+?: error:$(.+?)^Progress '.format(re.escape(executed_target)),stack_build_stderr_output,flags=re.DOTALL | re.MULTILINE)
+def extract_compilation_err(stack_build_stderr_output):
+    #the error may be either a normal compilation error in the submission
+    #or it may result from the submission failing to implement a function tested
+    #by the test file. Therefore the file producing the error may be either.
+    #errors may be normal, parse, lexical etc.
+    search_result = re.search(r'^(?:[^\n]+?)\.hs:\d+?:\d+?: error: ?(.+?)^Progress ',stack_build_stderr_output,flags=re.DOTALL | re.MULTILINE)
     if search_result:
         return search_result.group(1)
     else: return """The compilation error extraction regex didn't match on this output.

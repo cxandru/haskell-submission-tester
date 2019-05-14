@@ -1,0 +1,17 @@
+Building library for submission-test-0.1.0.0..
+[3 of 3] Compiling S                ( src/S.hs, .stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/S.o )
+Preprocessing test suite 'anteilImKreis' for submission-test-0.1.0.0..
+Building test suite 'anteilImKreis' for submission-test-0.1.0.0..
+[1 of 2] Compiling Main             ( test/anteilImKreis.hs, .stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/anteilImKreis/anteilImKreis-tmp/Main.o ) [S changed]
+
+/home/earendil/1LMU_SS19/ProMo/promo19-exc-submission-testing/H1/Test_Execution/kreisflaeche/test/anteilImKreis.hs:7:21: error:
+    Module ‘S’ does not export ‘anteilImKreis’
+  |
+7 | import qualified S (anteilImKreis)
+  |                     ^^^^^^^^^^^^^
+Progress 1/2
+
+--  While building package submission-test-0.1.0.0 using:
+      /home/earendil/.stack/setup-exe-cache/x86_64-linux/Cabal-simple_mPHDZzAJ_2.4.0.1_ghc-8.6.4 --builddir=.stack-work/dist/x86_64-linux/Cabal-2.4.0.1 build lib:submission-test test:anteilImKreis --ghc-options " -ddump-hi -ddump-to-file"
+    Process exited with code: ExitFailure 1
+in submission /home/earendil/1LMU_SS19/ProMo/promo19-exc-submission-testing/H1/Intermediate_Files/uwaf6qmqap6m7saw/H1-3.hs

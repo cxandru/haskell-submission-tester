@@ -1,0 +1,15 @@
+submission-test-0.1.0.0: unregistering (--force-dirty specified)
+submission-test-0.1.0.0: build (lib + test)
+Preprocessing library for submission-test-0.1.0.0..
+Building library for submission-test-0.1.0.0..
+
+/home/earendil/1LMU_SS19/ProMo/promo19-exc-submission-testing/H1/Test_Execution/kreisflaeche/src/S.hs:3:1: error: lexical error at character '\SOH'
+  |
+3 | d�����������8���0���6���4���d���y���n��������������vDzQ7L1uZT)<SQ KЧ{4O@k\uᖓ
+  | ^
+Progress 1/2
+
+--  While building package submission-test-0.1.0.0 using:
+      /home/earendil/.stack/setup-exe-cache/x86_64-linux/Cabal-simple_mPHDZzAJ_2.4.0.1_ghc-8.6.4 --builddir=.stack-work/dist/x86_64-linux/Cabal-2.4.0.1 build lib:submission-test test:anteilImKreis --ghc-options " -ddump-hi -ddump-to-file"
+    Process exited with code: ExitFailure 1
+in submission /home/earendil/1LMU_SS19/ProMo/promo19-exc-submission-testing/H1/Intermediate_Files/uwazt2ylxsfdsgx6/promo aufgabe/H1-3/H1-3.hi
