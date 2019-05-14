@@ -16,7 +16,7 @@ debug = True
 ######################################
 
 def resetStatic(intermediate_dir, submissions):
-    """ removes all .msg files from the intermediate_dir"""
+    """ removes all .msg and .xml files from the intermediate_dir"""
     files = [glob(join(intermediate_dir,submission, '*.msg')) + glob(join(intermediate_dir,submission, '*.xml')) for submission in submissions]
     for f in chain.from_iterable(files):
         if isfile(f):
@@ -43,7 +43,6 @@ def exc_to_subexc_dFunc(exc_to_subexc_and_stack_name_d):
     return {k: v[0] for k,v in exc_to_subexc_and_stack_name_d.items()}
 
 def genWalkmaps(submissions, directory, exc_to_subexc_al, exc_to_subexc_d):
-
     # if more than one candidate file appears for submission, the last one found will be mapped - students should be smart enough to not submit several files.
     # {submission:[(exercise,abs_path_to_exc)]}
     subm_to_ep_d = { s:[] for s in submissions}
@@ -77,6 +76,11 @@ def submissionsFunc(directory):
     return [ basename(f) for f in glob(join(directory, '*'))
               if (isdir(f) and isfile(join(f,'bewertung_{}.txt'.format(basename(f))))) ]
 
+def setup_dir_default(base_dir):
+    return setup_dir(base_dir, "Submissions", "Tests", "exc_dict")
+
+def setup_dir(base_dir, submissions, reference_stack_projects, exc_to_subexc_and_stack_name_d_eval_file):
+    return setup(join(base_dir,submissions), join(base_dir,reference_stack_projects), join(base_dir, exc_to_subexc_and_stack_name_d_eval_file))
 
 def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack_name_d_eval_file):
     """
@@ -163,10 +167,13 @@ class ExerciseGradingContext:
                 
     def concatMsgsToFinalAndRepaceResBewertungFile(self,submission):
         allMsgs=""
-        #do we write if a student didn't hand in a file? 
-        for msg_f in glob(join(self.intermediate_normalized_dir,submission,'*.msg'))+glob(join(self.intermediate_normalized_dir,submission,'*.xml')):
-            with open(msg_f, mode='r') as f_in:
-                allMsgs += "\n"+ f_in.read()
+        for exercise in self.exc_to_sp_d.keys(): #+glob(join(self.intermediate_normalized_dir,submission,'*.xml')
+            exc_name, subexc_name = exercise
+            msg_f = join(self.intermediate_normalized_dir, submission, exc_name+subexc_name+'.msg')
+            if isfile(msg_f): #TODO: do we write if a student didn't hand in a file?
+                with open(msg_f, mode='r') as f_in:
+                    allMsgs += "\n"+ f_in.read()
+                
         emptyBewFile=join(self.intermediate_normalized_dir, submission ,'bewertung_{}.txt'.format(submission))
         targetBewFile=join(self.results_dir,submission, 'bewertung_{}.txt'.format(submission))
         if isfile(emptyBewFile):
