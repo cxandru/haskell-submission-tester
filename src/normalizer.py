@@ -1,12 +1,16 @@
-import os, re, codecs
+import os, subprocess, re, codecs
 from os.path import join, isfile, isdir, basename, exists
+from shlex import quote
 
 def normalize_exc_submissions(directory):
     '''Normalizes student submission file names to the schema H\d{1,2}_\d.hs and
     adds a module header with the appropriate name to allow qualified imports of the
     submission file.
     '''
-    for path,dirs,files in next(os.walk(directory)):#start at depth 2
+    subprocess.run(["chmod", "-R", "u+w", quote(directory)])
+    walker=os.walk(directory)
+    next(walker)#start at depth 2
+    for path,dirs,files in walker:
         if (re.search(r'__MACOSX', path) or
             re.search(r'/[.].+',    path)) :
             continue
