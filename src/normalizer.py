@@ -6,26 +6,29 @@ def normalize_exc_submissions(directory):
     adds a module header with the appropriate name to allow qualified imports of the
     submission file.
     '''
-    for path,dirs,files in os.walk(directory):
+    for path,dirs,files in next(os.walk(directory)):#start at depth 2
+        if (re.search(r'__MACOSX', path) or
+            re.search(r'/[.].+',    path)) :
+            continue
+        
         for filename in files:
-            ##normalize file name
+            #normalize file name
             new_filename=filename
             new_filename = new_filename.strip()
             if new_filename[-6:]=='.hs.hs':
                 new_filename=new_filename[:-3]
             if new_filename[-7:]=='.hs.txt':
                 new_filename=new_filename[:-4]
-
+                
+            #looks like an intended submission
             if re.match(r'[AhH]?\d{1,2}[-_]\d[.][hH][sS]', new_filename):
                 new_filename= 'H' + new_filename[1:-3].replace('_','-') + '.hs'
+            else: continue
 
             path_to_normal_exc = join(path,new_filename)
             if filename != new_filename:
                 if not exists(path_to_normal_exc):
                     os.rename(join(path,filename), path_to_normal_exc)
-                else:
-                    #The Overwrote thingy is no longer applicable
-                    print("WARNING: Overwrote file %s" % path_to_normal_exc) # very unlikely
 
             with open(path_to_normal_exc, mode='r',encoding="utf8",errors='ignore') as f_in:
                 # stip Unicode BOMs as GHC might not like them
