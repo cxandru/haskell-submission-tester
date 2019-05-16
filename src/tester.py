@@ -15,6 +15,19 @@ from itertools import chain
 debug = True
 ######################################
 
+def resetStaticTest(reference_stack_projects, stack_projects_dir, stack_project_root):
+    rmtree(join(stack_projects_dir,stack_project_root,'test'))
+    copytree(join(reference_stack_projects,stack_project_root,'test'),
+             join(stack_projects_dir,stack_project_root,'test')
+    )
+
+def resetStaticExc(intermediate_dir, submissions, exc_name):
+    files = [glob(join(intermediate_dir,submission, exc_name+'.msg')) + glob(join(intermediate_dir,submission, exc_name+'.xml')) for submission in submissions]
+    for f in chain.from_iterable(files):
+        if isfile(f):
+            if debug: print(f)
+            os.remove(f)
+
 def resetStatic(intermediate_dir, submissions):
     """ removes all .msg and .xml files from the intermediate_dir"""
     files = [glob(join(intermediate_dir,submission, '*.msg')) + glob(join(intermediate_dir,submission, '*.xml')) for submission in submissions]
@@ -103,17 +116,20 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
         if not isdir(intermediate_dir):
             copytree(submissions_dir, intermediate_dir)
             normalize_exc_submissions(intermediate_dir)
-        #todo: use find to recursively symlink all dirs except for src, which we copy.
-        #This means we react to changes in the original test dir, but don't overwrite src, which is important.
-        if not isdir(stack_projects_dir): copytree(reference_stack_projects_dir, stack_projects_dir)
-        
-        
         exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file)
+        
+        #TODO: use find to recursively symlink all dirs except for src, which we copy.
+        #This means we react to changes in the original test dir, but don't overwrite src, which is important.
+        #TODO: Only copy the tests stated as used in the exc_d map.
+        for exc_list_test_subdir in exc_to_subexc_and_stack_name_d.values():
+            _el, test_subdir = exc_list_test_subdir
+            if not isdir(join(stack_projects_dir, test_subdir)):
+                copytree(join(reference_stack_projects_dir, test_subdir), join(stack_projects_dir, test_subdir))
 
         return ExerciseGradingContext(intermediate_dir, results_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d)
     except Exception as e:
         print(e)
-        os.rmtree(intermediate_dir)
+        rmtree(intermediate_dir)
 
 
 class ExerciseGradingContext:
@@ -152,6 +168,12 @@ class ExerciseGradingContext:
         _subexcs, stack_project_root = self.exc_to_subexc_and_stack_name_d[exc_name]
         for key in self.exc_to_sp_d[exercise]:
             submission, abs_path_to_exc = key
+            #skip files for which we already have generated a msg file.
+            #if this is not wanted, reset should be called. Though perhaps we want
+            #a per exercise reset - that would be hard bc the files are stored in a
+            # submission-first structure.
+            if isfile(join(self.intermediate_normalized_dir,submission,exc_name+subexc_name+'.msg')):
+                continue
             maybeErr = gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, self.intermediate_normalized_dir, join(self.stack_projects_dir, stack_project_root))
             if(maybeErr and debug):
                 print(maybeErr + "in submission " + abs_path_to_exc)
@@ -160,6 +182,12 @@ class ExerciseGradingContext:
 
     def reset(self):
         resetStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
+
+    def resetExc(self, exc_name):
+        resetStaticExc(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
+
+    def resetTest(self,stack_project_root):
+        resetStaticTest(self.reference_stack_projects,self.stack_projects_dir, stack_project_root)
 
     def gradeAllExcAndWriteOut(self):
         for exc in self.exc_to_sp_d.keys():
