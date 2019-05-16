@@ -2,6 +2,27 @@ import os, subprocess, re, codecs
 from os.path import join, isfile, isdir, basename, exists
 from shlex import quote
 
+def findLastFileHeaderPragmaLine(code):
+    pragmas = list(re.finditer(r'{-#\s+?(?:LANGUAGE|OPTIONS_GHC).*?#-}',code, flags=re.DOTALL))
+    if pragmas:
+        return pragmas[-1].end()
+    else:
+        return 0
+
+def normalize_file_contents(code):
+    if code[:3] == codecs.BOM_UTF8:
+        code = code[3:]
+    #remove module declarations. 
+    code=re.sub(r'module\s+(.+?)\s+where', r'', code, count=1, flags=re.DOTALL)
+    #Put the module header after any file-level pragmas -
+    #This means we allow all language extensions
+    #There should not reasonably be any uses of the INCLUDE pragma.
+
+    last_pragma_end = findLastFileHeaderPragmaLine(code)
+    #insert module header after the last file pragma.
+    return code[:last_pragma_end] + '\nmodule S where\n\n' + code[last_pragma_end:]
+    
+    
 def normalize_exc_submissions(directory):
     '''Normalizes student submission file names to the schema H\d{1,2}_\d.hs and
     adds a module header with the appropriate name to allow qualified imports of the
@@ -36,22 +57,6 @@ def normalize_exc_submissions(directory):
 
             with open(path_to_normal_exc, mode='r',encoding="utf8",errors='ignore') as f_in:
                 # stip Unicode BOMs as GHC might not like them
-                s = f_in.read()
-                if s[:3] == codecs.BOM_UTF8:
-                    s = s[3:]
-                #remove module declarations. 
-                s=re.sub(r'module\s+(.+?)\s+where', r'', s, count=1, flags=re.DOTALL)
-                #Put the module header after any file-level pragmas -
-                #This means we allow all language extensions
-                #There should not reasonably be any uses of the INCLUDE pragma.
-            
-                pragmas = list(re.findall(r'{-#\s+(?:LANGUAGE|OPTIONS_GHC).*?-#}',r'', flags=re.DOTALL))
-                if pragmas:
-                    last_pragma_end = pragmas[-1].end()
-                else:
-                    last_pragma_end = 0
-                #insert module header after the last file pragma.
-                s=s[:last_pragma_end] + 'module S where\n\n' + s[last_pragma_end:]
+                s = normalize_file_contents(f_in.read())
                 with open(path_to_normal_exc, mode='w',encoding="utf8",errors='ignore') as f_out:
                     f_out.write(s)
-                    # note that haskell requires TWO newlines after module line
