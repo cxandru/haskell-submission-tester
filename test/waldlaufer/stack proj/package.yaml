@@ -1,0 +1,33 @@
+name:                submission-test
+version:             0.1.0.0
+github:              "githubuser/submission-test"
+license:             BSD3
+author:              "Gregor Cassian Alexandru"
+maintainer:          "example@example.com"
+copyright:           "2019 Gregor Cassian Alexandru"
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  ghc-options: -XSafe
+
+tests:
+  waldlaufer: &def
+    main:                waldlaufer.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - submission-test
+    - tasty
+    - tasty-hunit
+    - tasty-ant-xml

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #coding=utf-8
 
-import os, subprocess, re, codecs
+import os, subprocess, sys, resource, re
 from tasty_xml2msg import xml_to_corrector_string
 from os.path import join, isfile, isdir, basename, exists, islink
 from shlex import quote
@@ -39,45 +39,42 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     #pushd
     prev_dir= os.getcwd()
     os.chdir(stack_project_root_path)
+
+    
     try:
-        cmd= """
-        timeout --kill-after=20 60 stack build --force-dirty --test :{suitename} --test-arguments="--xml {xml_file}"
-        """.format(
-            abs_path_to_exc = abs_path_to_exc
-            , xml_file = quote(xml_file)
-            , suitename = "default" if not subexc_name else subexc_name 
-        )
-        p = subprocess.run(cmd, stderr=subprocess.PIPE, shell=True, cwd=None, timeout=80, check=True)
+        suitename = "default" if not subexc_name else subexc_name
+        waldlaufer_guards=["nice", "timeout", "--kill-after=0", "30", "prlimit", "--cpu=20", "--stack=500000"]
+        cmd=["stack", "build", "--force-dirty", "--test", ':'+suitename, '--test-arguments="--xml='+ quote(xml_file)+'"']
+        p = subprocess.run(waldlaufer_guards+cmd, stderr=subprocess.PIPE, check=True)
         with open(msg_file, 'w') as msg_fh:
              msg_fh.write(xml_to_corrector_string(xml_file, exc_name))
         return None
-    except subprocess.CalledProcessError as e: #=nonzero exit code during compilation
-        if not isfile(xml_file): #compilation error, not test failure
-            err = "Compilation Error:\n" + extract_compilation_err(applyBckspcChars(e.stderr.decode('utf8')))
+    except subprocess.CalledProcessError as e: #=nonzero exit code during compilition/execution
+        if not isfile(xml_file): #compilation/execution error, not test failure
+            err = extract_err(applyBckspcChars(e.stderr.decode('utf8')))
             with open(msg_file, 'w') as msg_fh:
-                msg_fh.write(err)
+                msg_fh.write(
+                    exercise_name+": "+
+                    err)
                 return err
         else:
             with open(msg_file, 'w') as msg_fh:
                 failure_string = xml_to_corrector_string(xml_file, exc_name)
                 msg_fh.write(failure_string)
             return failure_string
-    except subprocess.TimeoutExpired:
-        timeout_msg='{}: times out. Probably bottomless recursion.'.format(abs_path_to_exc)
-        with open(msg_file, 'w') as msg_fh:
-            msg_fh.write(timeout_msg)
-        return timeout_msg
     finally:
         os.chdir(prev_dir) #popd
 
-def extract_compilation_err(stack_build_stderr_output):
+def extract_err(stack_build_stderr_output):
     #the error may be either a normal compilation error in the submission
     #or it may result from the submission failing to implement a function tested
     #by the test file. Therefore the file producing the error may be either.
     #errors may be normal, parse, lexical etc.
     search_result = re.search(r'^(?:[^\n]+?)\.hs:\d+?:\d+?: error: ?(.+?)^Progress ',stack_build_stderr_output,flags=re.DOTALL | re.MULTILINE)
     if search_result:
-        return search_result.group(1)
+        return "Compilation Error:\n"+search_result.group(1)
+    elif re.search("exited with: ExitFailure \(-9\)",stack_build_stderr_output):
+        return "CPU time or Memory limits exceeded. Probably bottomless recursion."
     else: return """The compilation error extraction regex didn't match on this output.
     Please report this error at https://gitlab.lrz.de/alexandru/haskell-submission-tester.
     This was the raw stderr: (Please attach this in your issue):

@@ -15,9 +15,9 @@ from itertools import chain
 debug = True
 ######################################
 
-def resetStaticTest(reference_stack_projects, stack_projects_dir, stack_project_root):
+def resetStaticTest(reference_stack_projects_dir, stack_projects_dir, stack_project_root):
     rmtree(join(stack_projects_dir,stack_project_root,'test'))
-    copytree(join(reference_stack_projects,stack_project_root,'test'),
+    copytree(join(reference_stack_projects_dir,stack_project_root,'test'),
              join(stack_projects_dir,stack_project_root,'test')
     )
 
@@ -92,8 +92,8 @@ def submissionsFunc(directory):
 def setup_dir_default(base_dir):
     return setup_dir(base_dir, "Submissions", "Tests", "exc_dict")
 
-def setup_dir(base_dir, submissions, reference_stack_projects, exc_to_subexc_and_stack_name_d_eval_file):
-    return setup(join(base_dir,submissions), join(base_dir,reference_stack_projects), join(base_dir, exc_to_subexc_and_stack_name_d_eval_file))
+def setup_dir(base_dir, submissions, reference_stack_projects_dir, exc_to_subexc_and_stack_name_d_eval_file):
+    return setup(join(base_dir,submissions), join(base_dir,reference_stack_projects_dir), join(base_dir, exc_to_subexc_and_stack_name_d_eval_file))
 
 def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack_name_d_eval_file):
     """
@@ -126,14 +126,14 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
             if not isdir(join(stack_projects_dir, test_subdir)):
                 copytree(join(reference_stack_projects_dir, test_subdir), join(stack_projects_dir, test_subdir))
 
-        return ExerciseGradingContext(intermediate_dir, results_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d)
+        return ExerciseGradingContext(intermediate_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d)
     except Exception as e:
         print(e)
         rmtree(intermediate_dir)
 
 
 class ExerciseGradingContext:
-    def __init__(self, intermediate_normalized_dir, results_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d):
+    def __init__(self, intermediate_normalized_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d):
         """
         •intermediate_normalized_dir: Submissions in this dir have the 
         name specified in the exc_to_…_d, with module header S. Special splices/removes of imports not yet supported.
@@ -149,6 +149,7 @@ class ExerciseGradingContext:
         """
         self.intermediate_normalized_dir = intermediate_normalized_dir
         self.results_dir = results_dir
+        self.reference_stack_projects_dir = reference_stack_projects_dir
         self.stack_projects_dir = stack_projects_dir
         
         self.exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_d
@@ -173,6 +174,7 @@ class ExerciseGradingContext:
             #a per exercise reset - that would be hard bc the files are stored in a
             # submission-first structure.
             if isfile(join(self.intermediate_normalized_dir,submission,exc_name+subexc_name+'.msg')):
+                if debug: print("Skip "+abs_path_to_exc)
                 continue
             maybeErr = gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, self.intermediate_normalized_dir, join(self.stack_projects_dir, stack_project_root))
             if(maybeErr and debug):
@@ -184,10 +186,10 @@ class ExerciseGradingContext:
         resetStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
 
     def resetExc(self, exc_name):
-        resetStaticExc(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
+        resetStaticExc(self.intermediate_normalized_dir,self.subm_to_ep_d.keys(),exc_name)
 
     def resetTest(self,stack_project_root):
-        resetStaticTest(self.reference_stack_projects,self.stack_projects_dir, stack_project_root)
+        resetStaticTest(self.reference_stack_projects_dir,self.stack_projects_dir, stack_project_root)
 
     def gradeAllExcAndWriteOut(self):
         for exc in self.exc_to_sp_d.keys():
