@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fde3a5790e9a8c8a7c40338ee94b64b4901bc5327d6d0cf05118d5ef56d8faff
+-- hash: ac2519d06fe758a0d5c03ddeddc8049bc01200b6b7d73a8d9032d96d92a4dd74
 
 name:           submission-test
 version:        0.1.0.0
@@ -27,7 +27,7 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      S
   other-modules:
       Paths_submission_test
   hs-source-dirs:
@@ -41,11 +41,11 @@ test-suite a
   type: exitcode-stdio-1.0
   main-is: a.hs
   other-modules:
-      Spec
+      L
       Paths_submission_test
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       base >=4.7 && <5
     , submission-test
@@ -58,13 +58,13 @@ test-suite a
 
 test-suite default
   type: exitcode-stdio-1.0
-  main-is: test.hs
+  main-is: default.hs
   other-modules:
-      Spec
+      L
       Paths_submission_test
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       base >=4.7 && <5
     , submission-test

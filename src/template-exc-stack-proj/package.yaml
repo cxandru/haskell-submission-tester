@@ -28,12 +28,13 @@ library:
 
 tests:
   default: &def
-    main:                test.hs
+    main:                default.hs
     source-dirs:         test
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
     dependencies:
     - submission-test
     - tasty
