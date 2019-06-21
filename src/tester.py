@@ -16,9 +16,9 @@ debug = True
 ######################################
 
 def resetStaticTest(reference_stack_projects_dir, stack_projects_dir, stack_project_root):
-    rmtree(join(stack_projects_dir,stack_project_root,'test'))
-    copytree(join(reference_stack_projects_dir,stack_project_root,'test'),
-             join(stack_projects_dir,stack_project_root,'test')
+    rmtree(join(stack_projects_dir,stack_project_root))
+    copytree(join(reference_stack_projects_dir,stack_project_root),
+             join(stack_projects_dir,stack_project_root)
     )
 
 def resetStaticExc(intermediate_dir, submissions, exc_name):
