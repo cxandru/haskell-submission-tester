@@ -3,7 +3,7 @@ from os.path import join, isfile, isdir, basename, exists
 from shlex import quote
 
 def findLastFileHeaderPragmaLine(code):
-    pragmas = list(re.finditer(r'{-#\s+?(?:LANGUAGE|OPTIONS_GHC).*?#-}',code, flags=re.DOTALL))
+    pragmas = list(re.finditer(r'^\s*?{-#\s+?(?:LANGUAGE|OPTIONS_GHC).*?#-}',code, flags=re.DOTALL | re.MULTILINE))
     if pragmas:
         return pragmas[-1].end()
     else:
