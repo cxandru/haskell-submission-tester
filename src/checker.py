@@ -14,7 +14,7 @@ import re
 
 
 def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, intermediate_dir, stack_project_root_path):
-    '''grade the given exercise for the given submission by symlinking it to the stack_project_root_path,
+    '''grade the given exercise for the given submission by copying it to the stack_project_root_path,
     stack testing it there, and writing the results to a msg file with the name of
     the exercise in itermediate_dir/submission/. 
     Return an error_string if one occured, None otherwise.
@@ -43,9 +43,12 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     
     try:
         suitename = "default" if not subexc_name else subexc_name
-        waldlaufer_guards=["nice", "timeout", "--kill-after=0", "30", "prlimit", "--cpu=20", "--stack=500000"]
+        waldlaufer_guards=["nice", "timeout", "--kill-after=0", "30", "prlimit", "--cpu=25", "--stack=900000"]
         cmd=["stack", "build", "--force-dirty", "--test", ':'+suitename, '--test-arguments="--xml='+ quote(xml_file)+'"']
         p = subprocess.run(waldlaufer_guards+cmd, stderr=subprocess.PIPE, check=True)
+        if not isfile(xml_file):
+            print(applyBckspcChars(p.stderr.decode('utf')))
+            raise Exception('Test failed')
         with open(msg_file, 'w') as msg_fh:
              msg_fh.write(xml_to_corrector_string(xml_file, exc_name))
         return None
