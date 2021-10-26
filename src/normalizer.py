@@ -13,7 +13,7 @@ def normalize_file_contents(code):
     if code[:3] == codecs.BOM_UTF8:
         code = code[3:]
     #remove module declarations. 
-    code=re.sub(r'module\s+(.+?)\s+where', r'', code, count=1, flags=re.DOTALL)
+    code=re.sub(r'module\s+(.+?)\s+where', r'', code, flags=re.DOTALL)
     #Put the module header after any file-level pragmas -
     #This means we allow all language extensions
     #There should not reasonably be any uses of the INCLUDE pragma.
