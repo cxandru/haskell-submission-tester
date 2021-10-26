@@ -13,7 +13,7 @@ def xml_to_corrector_string(xml_file, exc_name):
     subst_exc_name(xml,exc_name)
     main_test=xml.find('testsuite')
     failure_string=reduce(add,map(readify_failure,main_test.iter('failure')),'')
-    return main_test.get('name')+':' + ("korrekt" if not failure_string else failure_string)
+    return main_test.get('name')+': ' + ("correct" if not failure_string else failure_string)
 
 def subst_exc_name(xml, exc_name):
     """replace occurences of the placeholder {S} in 
@@ -26,4 +26,4 @@ def subst_exc_name(xml, exc_name):
 def readify_failure(failure):
     error_msg=sub(r'^Use --quickcheck-replay=(.*?)$','',str(failure.text),flags = re.MULTILINE| re.DOTALL)
     testcase_name=failure.getparent().get('name')
-    return '\n' + ' Test ' + testcase_name + ' failed:\n' + error_msg
+    return '\n' + ' Test "' + testcase_name + '" failed:\n' + error_msg
