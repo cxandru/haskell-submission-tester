@@ -44,23 +44,26 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     try:
         suitename = "default" if not subexc_name else subexc_name
         waldlaufer_guards=["nice", "timeout", "--kill-after=0", "30", "prlimit", "--cpu=25", "--stack=900000"]
-        cmd=["stack", "build", "--force-dirty", "--test", ':'+suitename, '--test-arguments="--xml='+ quote(xml_file)+'"']
+        cmd=["stack", "build", "--force-dirty", "--test", ':'+suitename, '--test-arguments="--xml=out.xml"']
         p = subprocess.run(waldlaufer_guards+cmd, stderr=subprocess.PIPE, check=True)
-        if not isfile(xml_file):
+        if not isfile("out.xml"):
             print(applyBckspcChars(p.stderr.decode('utf')))
-            raise Exception('Test failed')
+            raise Exception('Test failed to produce an xml output')
         with open(msg_file, 'w') as msg_fh:
-             msg_fh.write(xml_to_corrector_string(xml_file, exc_name))
+            # See: https://github.com/commercialhaskell/stack/issues/3091 for why we do this
+            os.rename("out.xml", xml_file)
+            msg_fh.write(xml_to_corrector_string(xml_file, exc_name))
         return None
     except subprocess.CalledProcessError as e: #=nonzero exit code during compilition/execution
-        if not isfile(xml_file): #compilation/execution error, not test failure
+        if not isfile("out.xml"): #compilation/execution error, not test failure
             err = extract_err(applyBckspcChars(e.stderr.decode('utf8')))
             with open(msg_file, 'w') as msg_fh:
                 msg_fh.write(
-                    exercise_name+": "+
+                    exc_name + ": " + subexc_name+": "+
                     err)
                 return err
         else:
+            os.rename("out.xml", xml_file)
             with open(msg_file, 'w') as msg_fh:
                 failure_string = xml_to_corrector_string(xml_file, exc_name)
                 msg_fh.write(failure_string)
