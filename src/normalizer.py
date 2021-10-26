@@ -23,7 +23,7 @@ def normalize_file_contents(code):
     return code[:last_pragma_end] + '\nmodule S where\n\n' + code[last_pragma_end:]
     
     
-def normalize_exc_submissions(directory):
+def normalize_exc_submissions(directory, exc_name_d):
     '''Normalizes student submission file names to the schema H\d{1,2}_\d.hs and
     adds a module header with the appropriate name to allow qualified imports of the
     submission file.
@@ -48,6 +48,7 @@ def normalize_exc_submissions(directory):
             #looks like an intended submission
             if re.match(r'[AhH]?\d{1,2}[-_]\d[.][hH][sS]', new_filename):
                 new_filename= 'H' + new_filename[1:-3].replace('_','-') + '.hs'
+            elif new_filename[:-3] in exc_name_d: pass
             else: continue
 
             path_to_normal_exc = join(path,new_filename)

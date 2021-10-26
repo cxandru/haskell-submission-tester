@@ -113,11 +113,10 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
         stack_projects_dir = join(root_dir, 'Test_Execution')
 
         if not isdir(results_dir): copytree(submissions_dir, results_dir)
+        exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file)
         if not isdir(intermediate_dir):
             copytree(submissions_dir, intermediate_dir)
-            normalize_exc_submissions(intermediate_dir)
-        exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file)
-        
+            normalize_exc_submissions(intermediate_dir, exc_to_subexc_and_stack_name_d)
         #TODO: use find to recursively symlink all dirs except for src, which we copy.
         #This means we react to changes in the original test dir, but don't overwrite src, which is important.
         #TODO: Only copy the tests stated as used in the exc_d map.
