@@ -82,7 +82,7 @@ def extract_err(stack_build_stderr_output):
     elif re.search("exited with: ExitFailure \(-9\)",stack_build_stderr_output):
         return "CPU time or Memory limits exceeded. Probably bottomless recursion."
     else: return """The compilation error extraction regex didn't match on this output.
-    Please report this error at https://gitlab.lrz.de/alexandru/haskell-submission-tester.
+    Please report this error at https://github.com/cxandru/haskell-submission-tester.
     This was the raw stderr: (Please attach this in your issue):
     """ + stack_build_stderr_output
 
