@@ -10,22 +10,28 @@ from sys import argv,stderr,exit
 from normalizer import normalize_exc_submissions
 from checker import gradeExcForSubmissionRetMaybeErr
 from itertools import chain
+import logging
 
-#################global var#############
-debug = True
+#################Logging##############
+logging.basicConfig(level=logging.NOTSET)
 ######################################
 
 def resetStaticTest(reference_stack_projects_dir, stack_projects_dir, stack_project_root):
-    rmtree(join(stack_projects_dir,stack_project_root))
-    copytree(join(reference_stack_projects_dir,stack_project_root),
-             join(stack_projects_dir,stack_project_root)
-    )
+    """ re-import the specified testing project from the reference dir to the actual """
+    actual_project = join(stack_projects_dir,stack_project_root)
+    if isdir(actual_project) :
+        rmtree(actual_project)
+        logging.info("Removing " + actual_project)
+    else: logging.info(actual_project + "did not exist.")
+    copytree(join(reference_stack_projects_dir,stack_project_root), actual_project)
+
 
 def resetStaticExc(intermediate_dir, submissions, exc_name):
+    """ per-exercise reset"""
     files = [glob(join(intermediate_dir,submission, exc_name+'.msg')) + glob(join(intermediate_dir,submission, exc_name+'.xml')) for submission in submissions]
     for f in chain.from_iterable(files):
         if isfile(f):
-            if debug: print(f)
+            logging.info(f)
             os.remove(f)
 
 def resetStatic(intermediate_dir, submissions):
@@ -33,7 +39,7 @@ def resetStatic(intermediate_dir, submissions):
     files = [glob(join(intermediate_dir,submission, '*.msg')) + glob(join(intermediate_dir,submission, '*.xml')) for submission in submissions]
     for f in chain.from_iterable(files):
         if isfile(f):
-            if debug: print(f)
+            logging.info(f)
             os.remove(f)
 
 def exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file):
@@ -80,14 +86,22 @@ def genWalkmaps(submissions, directory, exc_to_subexc_al, exc_to_subexc_d):
                         exc_to_sp_d[exercise].append((submission,abs_path_to_exc))
     return (subm_to_ep_d, exc_to_sp_d)
 
-
-def submissionsFunc(directory):
+def submissionsFuncBewertung(directory):
     """
     list of all submissions (ids) in directory, skipping 
     the folders <foo> without bewertung_<foo>.txt file inside
     """
     return [ basename(f) for f in glob(join(directory, '*'))
               if (isdir(f) and isfile(join(f,'bewertung_{}.txt'.format(basename(f))))) ]
+
+def submissionsFuncFeedback(directory):
+    """
+    list of all submissions (ids) in directory, skipping
+    the folders without feedback.txt file inside
+    """
+    return [ basename(f) for f in glob(join(directory, '*'))
+              if (isdir(f) and isfile(join(f,'feedback.txt'))) ]
+
 
 def setup_dir_default(base_dir):
     return setup_dir(base_dir, "Submissions", "Tests", "exc_dict")
@@ -118,16 +132,18 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
             copytree(submissions_dir, intermediate_dir)
             normalize_exc_submissions(intermediate_dir, exc_to_subexc_and_stack_name_d)
         #TODO: use find to recursively symlink all dirs except for src, which we copy.
-        #This means we react to changes in the original test dir, but don't overwrite src, which is important.
-        #TODO: Only copy the tests stated as used in the exc_d map.
-        for exc_list_test_subdir in exc_to_subexc_and_stack_name_d.values():
-            _el, test_subdir = exc_list_test_subdir
-            if not isdir(join(stack_projects_dir, test_subdir)):
-                copytree(join(reference_stack_projects_dir, test_subdir), join(stack_projects_dir, test_subdir))
+           #This means we react to changes in the original test dir, but don't overwrite src, which is important.
+           #Currently the way to react to changes is to use `resetTest`.
+        #Only copy the tests stated as used in the exc_d map.
+        for excList_project in exc_to_subexc_and_stack_name_d.values():
+            _el, project = excList_project
+            #Don't copy tests to test execution if tests dir exists
+            if not isdir(join(stack_projects_dir, project)):
+                copytree(join(reference_stack_projects_dir, project), join(stack_projects_dir, project))
 
         return ExerciseGradingContext(intermediate_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d)
     except Exception as e:
-        print(e)
+        logging.error(e)
         rmtree(intermediate_dir)
 
 
@@ -152,9 +168,15 @@ class ExerciseGradingContext:
         self.stack_projects_dir = stack_projects_dir
         
         self.exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_d
+
+        submissions = submissionsFuncFeedback(intermediate_normalized_dir)
+        if not submissions:
+            logging.warning("No submissions!")
         
+        # {submission:[(exercise,abs_path_to_exc)]}
+        # {exercise:[(submission, abs_path_to_exc)]}
         self.subm_to_ep_d, self.exc_to_sp_d = genWalkmaps(
-            submissionsFunc(intermediate_normalized_dir)
+            submissions
             , intermediate_normalized_dir
             , exc_to_subexc_alFunc(exc_to_subexc_and_stack_name_d)
             , exc_to_subexc_dFunc(exc_to_subexc_and_stack_name_d)
@@ -169,17 +191,15 @@ class ExerciseGradingContext:
         for key in self.exc_to_sp_d[exercise]:
             submission, abs_path_to_exc = key
             #skip files for which we already have generated a msg file.
-            #if this is not wanted, reset should be called. Though perhaps we want
-            #a per exercise reset - that would be hard bc the files are stored in a
-            # submission-first structure.
+            #if this is not wanted, reset should be called (per exercise).
             if isfile(join(self.intermediate_normalized_dir,submission,exc_name+subexc_name+'.msg')):
-                if debug: print("Skip "+abs_path_to_exc)
+                logging.info("Skipping "+abs_path_to_exc)
                 continue
             maybeErr = gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, self.intermediate_normalized_dir, join(self.stack_projects_dir, stack_project_root))
-            if(maybeErr and debug):
-                print(maybeErr + "in submission " + abs_path_to_exc)
+            if(maybeErr):
+                logging.info(maybeErr + "in submission " + abs_path_to_exc)
             else:
-                print("submission "+ abs_path_to_exc + " correct!")
+                logging.info("Submission "+ abs_path_to_exc + " correct!")
 
     def reset(self):
         resetStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
@@ -193,15 +213,41 @@ class ExerciseGradingContext:
     def gradeAllExcAndWriteOut(self):
         for exc in self.exc_to_sp_d.keys():
             self.gradeExc(exc)
-            print("Finished grading {}".format(exc))
+            logging.info("Finished grading {}".format(exc))
         self.genBewewertungenFromMsgs()
-        print("Finished generating Bewertungen")
+        logging.info("Finished generating Bewertungen")
 
         
     def genBewewertungenFromMsgs(self):
         for submission in self.subm_to_ep_d.keys():
-            self.concatMsgsToFinalAndRepaceResBewertungFile(submission)
-                
+            self.concatMsgsToFinalAndRepaceResFeedbackFile(submission)
+
+    def concatMsgsToFinalAndRepaceResFeedbackFile(self,submission):
+        allMsgs=""
+        for exercise in self.exc_to_sp_d.keys():
+            exc_name, subexc_name = exercise
+            msg_f = join(self.intermediate_normalized_dir, submission, exc_name+subexc_name+'.msg')
+            if isfile(msg_f): #TODO: do we write if a student didn't hand in a file?
+                with open(msg_f, mode='r') as f_in:
+                    allMsgs += "\n"+ f_in.read()
+
+        emptyBewFile=join(self.intermediate_normalized_dir, submission ,'feedback.txt')
+        targetBewFile=join(self.results_dir,submission, 'feedback.txt')
+        if isfile(emptyBewFile):
+            with open(emptyBewFile, 'r') as b_e:
+                emptyBewContents=b_e.read()
+            adc=r'Feedback:'
+            startMatch=re.search(adc, emptyBewContents)
+            if not startMatch or startMatch.end()<0:
+                logging.error("{} malformed".format(emptyBewFile))
+            beg=startMatch.end()
+            targetBewContents=emptyBewContents[:beg] + '\n' + allMsgs + '\n'
+
+            if isfile(targetBewFile): os.remove(targetBewFile)
+            with open(targetBewFile, 'w') as b_t:
+                b_t.write(targetBewContents)
+
+
     def concatMsgsToFinalAndRepaceResBewertungFile(self,submission):
         allMsgs=""
         for exercise in self.exc_to_sp_d.keys(): #+glob(join(self.intermediate_normalized_dir,submission,'*.xml')
@@ -220,7 +266,7 @@ class ExerciseGradingContext:
             #edc='============ Ende der Kommentare ============\n'#so this is usually there but we throw it away and replace it? is that the reason?
             startMatch=re.search(adc, emptyBewContents)
             if not startMatch or startMatch.end()<0:
-                print("ERROR: {} malformed".format(emptyBewFile))
+                logging.error("{} malformed".format(emptyBewFile))
             beg=startMatch.end()
             targetBewContents=emptyBewContents[:beg] + '\n' + allMsgs + '\n' #+ edc
             
