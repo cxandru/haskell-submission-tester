@@ -241,7 +241,7 @@ class ExerciseGradingContext:
             if not startMatch or startMatch.end()<0:
                 logging.error("{} malformed".format(emptyBewFile))
             beg=startMatch.end()
-            targetBewContents=emptyBewContents[:beg] + '\n' + allMsgs + '\n'
+            targetBewContents=emptyBewContents[:beg] + '\n' + allMsgs + '\n' + emptyBewContents[beg:]
 
             if isfile(targetBewFile): os.remove(targetBewFile)
             with open(targetBewFile, 'w') as b_t:
