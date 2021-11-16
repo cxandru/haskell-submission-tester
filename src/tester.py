@@ -42,24 +42,30 @@ def resetStatic(intermediate_dir, submissions):
             logging.info(f)
             os.remove(f)
 
-def exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file):
+def exc_to_subexc_and_stack_names_dFunc(exc_to_subexc_and_stack_names_d_eval_file):
     """reads in a map of the form {<exc_base_name> : ([<sub_exc_name>], <stack_project_root>)}"""
-    with open(exc_to_subexc_and_stack_name_d_eval_file, mode='r', encoding="utf8",errors='ignore') as f_in:
-        exc_to_subexc_and_stack_name_d_eval = f_in.read()
-    return eval(exc_to_subexc_and_stack_name_d_eval)
+    with open(exc_to_subexc_and_stack_names_d_eval_file, mode='r', encoding="utf8",errors='ignore') as f_in:
+        exc_to_subexc_and_stack_names_d_eval = f_in.read()
+    return eval(exc_to_subexc_and_stack_names_d_eval)
 
-def exc_to_subexc_alFunc(exc_to_subexc_and_stack_name_d):
+def exc_to_subexc_alFunc(exc_to_subexc_and_stack_names_d):
     "return an association list with all excs to subexs, tupled."
     exc_to_subexc_al = []
-    for key,value in exc_to_subexc_and_stack_name_d.items():
-        subexcs, _stack_dir = value
-        for subexc in subexcs:
-            exc_to_subexc_al.append((key, subexc))
+    for key,values in exc_to_subexc_and_stack_names_d.items():
+        for value in values:
+          subexcs, _stack_dir = value
+          for subexc in subexcs:
+              exc_to_subexc_al.append((key, subexc))
     return exc_to_subexc_al
 
-def exc_to_subexc_dFunc(exc_to_subexc_and_stack_name_d):
+def exc_to_subexc_dFunc(exc_to_subexc_and_stack_names_d):
     "strip the stack proj root"
-    return {k: v[0] for k,v in exc_to_subexc_and_stack_name_d.items()}
+    exc_to_subexc_d = {}
+    for k,es_sts in exc_to_subexc_and_stack_names_d.items():
+        e = exc_to_subexc_d.setdefault(k,[])
+        for es_st in es_sts:
+            e.extend(es_st[0])
+    return exc_to_subexc_d
 
 def genWalkmaps(submissions, directory, exc_to_subexc_al, exc_to_subexc_d):
     # if more than one candidate file appears for submission, the last one found will be mapped - students should be smart enough to not submit several files.
@@ -106,10 +112,10 @@ def submissionsFuncFeedback(directory):
 def setup_dir_default(base_dir):
     return setup_dir(base_dir, "Submissions", "Tests", "exc_dict")
 
-def setup_dir(base_dir, submissions, reference_stack_projects_dir, exc_to_subexc_and_stack_name_d_eval_file):
-    return setup(join(base_dir,submissions), join(base_dir,reference_stack_projects_dir), join(base_dir, exc_to_subexc_and_stack_name_d_eval_file))
+def setup_dir(base_dir, submissions, reference_stack_projects_dir, exc_to_subexc_and_stack_names_d_eval_file):
+    return setup(join(base_dir,submissions), join(base_dir,reference_stack_projects_dir), join(base_dir, exc_to_subexc_and_stack_names_d_eval_file))
 
-def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack_name_d_eval_file):
+def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack_names_d_eval_file):
     """
     If the directories already exist
     Copies the submissions_dir to dirs 'Intermediate_Files', 'Results', located in
@@ -117,7 +123,7 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
     Copies the stack_projects_dir to 'Tests' in
     submissions_dir/.. ;
     Normalizes all .hs files of the type H\d-\d.hs in 'Intermediate_Files';
-    evaluates the exc_to_subexc_and_stack_name_d_eval_file to a dictionary;
+    evaluates the exc_to_subexc_and_stack_names_d_eval_file to a dictionary;
     returns an ExerciseGradingContext object with all the info to start grading!
     """
     try:
@@ -127,28 +133,29 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
         stack_projects_dir = join(root_dir, 'Test_Execution')
 
         if not isdir(results_dir): copytree(submissions_dir, results_dir)
-        exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_dFunc(exc_to_subexc_and_stack_name_d_eval_file)
+        exc_to_subexc_and_stack_names_d = exc_to_subexc_and_stack_names_dFunc(exc_to_subexc_and_stack_names_d_eval_file)
         if not isdir(intermediate_dir):
             copytree(submissions_dir, intermediate_dir)
-            normalize_exc_submissions(intermediate_dir, exc_to_subexc_and_stack_name_d)
+            normalize_exc_submissions(intermediate_dir, exc_to_subexc_and_stack_names_d)
         #TODO: use find to recursively symlink all dirs except for src, which we copy.
            #This means we react to changes in the original test dir, but don't overwrite src, which is important.
            #Currently the way to react to changes is to use `resetTest`.
         #Only copy the tests stated as used in the exc_d map.
-        for excList_project in exc_to_subexc_and_stack_name_d.values():
-            _el, project = excList_project
-            #Don't copy tests to test execution if tests dir exists
-            if not isdir(join(stack_projects_dir, project)):
-                copytree(join(reference_stack_projects_dir, project), join(stack_projects_dir, project))
+        for excList_projects in exc_to_subexc_and_stack_names_d.values():
+            for excList_project in excList_projects:
+              _el, project = excList_project
+              #Don't copy tests to test execution if tests dir exists
+              if not isdir(join(stack_projects_dir, project)):
+                  copytree(join(reference_stack_projects_dir, project), join(stack_projects_dir, project))
 
-        return ExerciseGradingContext(intermediate_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d)
+        return ExerciseGradingContext(intermediate_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_names_d)
     except Exception as e:
         logging.error(e)
         rmtree(intermediate_dir)
 
 
 class ExerciseGradingContext:
-    def __init__(self, intermediate_normalized_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_name_d):
+    def __init__(self, intermediate_normalized_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_names_d):
         """
         •intermediate_normalized_dir: Submissions in this dir have the 
         name specified in the exc_to_…_d, with module header S. Special splices/removes of imports not yet supported.
@@ -167,7 +174,7 @@ class ExerciseGradingContext:
         self.reference_stack_projects_dir = reference_stack_projects_dir
         self.stack_projects_dir = stack_projects_dir
         
-        self.exc_to_subexc_and_stack_name_d = exc_to_subexc_and_stack_name_d
+        self.exc_to_subexc_and_stack_names_d = exc_to_subexc_and_stack_names_d
 
         submissions = submissionsFuncFeedback(intermediate_normalized_dir)
         if not submissions:
@@ -178,8 +185,8 @@ class ExerciseGradingContext:
         self.subm_to_ep_d, self.exc_to_sp_d = genWalkmaps(
             submissions
             , intermediate_normalized_dir
-            , exc_to_subexc_alFunc(exc_to_subexc_and_stack_name_d)
-            , exc_to_subexc_dFunc(exc_to_subexc_and_stack_name_d)
+            , exc_to_subexc_alFunc(exc_to_subexc_and_stack_names_d)
+            , exc_to_subexc_dFunc(exc_to_subexc_and_stack_names_d)
         )
 
     def gradeExc(self, exercise):
@@ -187,7 +194,8 @@ class ExerciseGradingContext:
         Grades this exc for all submission that have it.
         """
         exc_name,subexc_name = exercise
-        _subexcs, stack_project_root = self.exc_to_subexc_and_stack_name_d[exc_name]
+        subexcs2roots = self.exc_to_subexc_and_stack_names_d[exc_name]
+        stack_project_root = [root for subexcs,root in subexcs2roots if subexc_name in subexcs][0]
         for key in self.exc_to_sp_d[exercise]:
             submission, abs_path_to_exc = key
             #skip files for which we already have generated a msg file.
