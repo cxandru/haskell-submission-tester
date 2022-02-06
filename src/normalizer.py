@@ -25,8 +25,10 @@ def normalize_file_contents(code):
     
 def normalize_exc_submissions(directory, exc_name_d):
     '''Normalizes student submission file names to the schema H\d{1,2}_\d.hs and
-    adds a module header with the appropriate name to allow qualified imports of the
-    submission file.
+    adds a module header 'S' to allow qualified imports of the
+    submission file. As a side-effect, this saves one some keystrokes when writing tests
+    since one doesn't have to adjust the name of the submission module imported
+    per exercise.
     '''
     subprocess.run(["chmod", "-R", "u+w", quote(directory)])
     walker=os.walk(directory)

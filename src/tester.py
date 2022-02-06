@@ -23,6 +23,7 @@ def resetStaticTest(reference_stack_projects_dir, stack_projects_dir, stack_proj
         rmtree(actual_project)
         logging.info("Removing " + actual_project)
     else: logging.info(actual_project + "did not exist.")
+    logging.info("Resetting " + actual_project + " from reference dir '" + reference_stack_projects_dir + "'")
     copytree(join(reference_stack_projects_dir,stack_project_root), actual_project)
 
 
@@ -34,7 +35,7 @@ def resetStaticExc(intermediate_dir, submissions, exc_name):
             logging.info(f)
             os.remove(f)
 
-def resetStatic(intermediate_dir, submissions):
+def resetAllExcsStatic(intermediate_dir, submissions):
     """ removes all .msg and .xml files from the intermediate_dir"""
     files = [glob(join(intermediate_dir,submission, '*.msg')) + glob(join(intermediate_dir,submission, '*.xml')) for submission in submissions]
     for f in chain.from_iterable(files):
@@ -83,6 +84,8 @@ def genWalkmaps(submissions, directory, exc_to_subexc_al, exc_to_subexc_d):
                 re.search(r'/[.].+',    path)) :
                 continue
             for exercise_file in files:
+                if exercise_file[-3:] in [ "zip" "rar" ".gz" ".7z" ]:
+                    logging.warning(submission + "contains an archive. Did you unzip?" )
                 ename = exercise_file[:-3]
                 if ename in exc_to_subexc_d:
                     for subexc in exc_to_subexc_d[ename]:
@@ -117,12 +120,12 @@ def setup_dir(base_dir, submissions, reference_stack_projects_dir, exc_to_subexc
 
 def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack_names_d_eval_file):
     """
-    If the directories already exist
+    If the directories don't already exist
     Copies the submissions_dir to dirs 'Intermediate_Files', 'Results', located in
     submissions_dir/.. ;  
     Copies the stack_projects_dir to 'Tests' in
     submissions_dir/.. ;
-    Normalizes all .hs files of the type H\d-\d.hs in 'Intermediate_Files';
+    Normalizes all to-be-tested .hs files in 'Intermediate_Files';
     evaluates the exc_to_subexc_and_stack_names_d_eval_file to a dictionary;
     returns an ExerciseGradingContext object with all the info to start grading!
     """
@@ -140,7 +143,7 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
         #TODO: use find to recursively symlink all dirs except for src, which we copy.
            #This means we react to changes in the original test dir, but don't overwrite src, which is important.
            #Currently the way to react to changes is to use `resetTest`.
-        #Only copy the tests stated as used in the exc_d map.
+        #Only copy the tests stated as used in the exc_d map:
         for excList_projects in exc_to_subexc_and_stack_names_d.values():
             for excList_project in excList_projects:
               _el, project = excList_project
@@ -209,8 +212,8 @@ class ExerciseGradingContext:
             else:
                 logging.info("Submission "+ abs_path_to_exc + " correct!")
 
-    def reset(self):
-        resetStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
+    def resetAllExcs(self):
+        resetAllExcsStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
 
     def resetExc(self, exc_name):
         resetStaticExc(self.intermediate_normalized_dir,self.subm_to_ep_d.keys(),exc_name)
@@ -238,6 +241,8 @@ class ExerciseGradingContext:
             if isfile(msg_f): #TODO: do we write if a student didn't hand in a file?
                 with open(msg_f, mode='r') as f_in:
                     allMsgs += "\n"+ f_in.read()
+            else:
+                logging.warning("msg file " + msg_f + " does not exist")
 
         emptyBewFile=join(self.intermediate_normalized_dir, submission ,'feedback.txt')
         targetBewFile=join(self.results_dir,submission, 'feedback.txt')
