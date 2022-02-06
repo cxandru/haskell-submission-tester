@@ -3,9 +3,20 @@ dependencies:
 - base >= 4.7 && < 5
 - containers
 
+default-extensions:
+- LambdaCase
+- NamedFieldPuns
+- ScopedTypeVariables
+- TypeApplications
+
 library:
   source-dirs: src
-  ghc-options: -XSafe
+  ghc-options:
+  - -XSafe
+  - -Wall
+  - -fno-warn-orphans
+  - -fno-warn-unused-imports
+  - -fno-warn-type-defaults
 
 tests:
   default: &def
@@ -15,7 +26,6 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    - -Wall
     dependencies:
     - submission-test
     - tasty
@@ -23,6 +33,7 @@ tests:
     - tasty-hunit
     - tasty-smallcheck
     - tasty-ant-xml
-  a:
-    << : *def
-    main: a.hs
+  # a:
+  #   << : *def
+  #   main: a.hs
+
