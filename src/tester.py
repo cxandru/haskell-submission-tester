@@ -27,8 +27,10 @@ def resetStaticTest(reference_stack_projects_dir, stack_projects_dir, stack_proj
     copytree(join(reference_stack_projects_dir,stack_project_root), actual_project)
 
 
-def resetStaticExc(intermediate_dir, submissions, exc_name):
+def resetExcStatic(intermediate_dir, submissions, exercise):
     """ per-exercise reset"""
+    exc_name,subexc_name = exercise
+    exc_name = exc_name + subexc_name
     files = [glob(join(intermediate_dir,submission, exc_name+'.msg')) + glob(join(intermediate_dir,submission, exc_name+'.xml')) for submission in submissions]
     for f in chain.from_iterable(files):
         if isfile(f):
@@ -215,8 +217,8 @@ class ExerciseGradingContext:
     def resetAllExcs(self):
         resetAllExcsStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys())
 
-    def resetExc(self, exc_name):
-        resetStaticExc(self.intermediate_normalized_dir,self.subm_to_ep_d.keys(),exc_name)
+    def resetExc(self, exercise):
+        resetExcStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys(),exercise)
 
     def resetTest(self,stack_project_root):
         resetStaticTest(self.reference_stack_projects_dir,self.stack_projects_dir, stack_project_root)
