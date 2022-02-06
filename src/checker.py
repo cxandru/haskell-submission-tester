@@ -3,15 +3,16 @@
 
 import os, subprocess, sys, resource, re
 from tasty_xml2msg import xml_to_corrector_string
-from os.path import join, isfile, isdir, basename, exists, islink
+from os.path import join, isfile, isdir, dirname, basename, exists, islink
 from shlex import quote
-from shutil import copyfile
+from shutil import copyfile, copytree, rmtree
 from glob import glob
 from sys import argv,stderr,exit
 import re
 
 #new idea: since we are working with the maps we can make everything exercise-agnostic. This drastically improves reusability.
 
+hack = False
 
 def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, intermediate_dir, stack_project_root_path):
     '''grade the given exercise for the given submission by copying it to the stack_project_root_path,
@@ -35,6 +36,12 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     if isfile(executed_target) or islink(executed_target): os.remove(executed_target)
     #we copy bc stack doesn't like symlinks.
     copyfile(abs_path_to_exc, executed_target)
+    if hack :
+        #this way there will be the S.hs as well as the OG.hs files in the dir.
+        #this IS a problem, actually, bc we've renamed the module in the original file.
+        #also, it's very stupid to copy over all the junk, actually.
+        if isfile(join(dirname(abs_path_to_exc),"Dice.hs")):
+            copyfile(join(dirname(abs_path_to_exc),"Dice.hs"), join(dirname(executed_target),"Dice.hs"))
 
     #pushd
     prev_dir= os.getcwd()
@@ -69,6 +76,8 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
                 msg_fh.write(failure_string)
             return failure_string
     finally:
+        if hack :
+            copyfile("/vol/fp-grading/haskell-exercise-test-projects/parsing/src/Dice.hs", join(dirname(executed_target),"Dice.hs"))
         os.chdir(prev_dir) #popd
 
 def extract_err(stack_build_stderr_output):
