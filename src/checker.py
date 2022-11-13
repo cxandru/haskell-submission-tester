@@ -36,6 +36,9 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     #we copy bc stack doesn't like symlinks.
     copyfile(abs_path_to_exc, executed_target)
 
+    # remove problematic imports
+    removeBadImports(executed_target) 
+
     #pushd
     prev_dir= os.getcwd()
     os.chdir(stack_project_root_path)
@@ -115,3 +118,31 @@ def applyBckspcChars(input_string):
 
     # We transform our "list" string back to a real string
     return "".join(displayed_string)
+
+
+def removeBadImports(path):
+  """
+  Try to compile the file file with "ghc -c path".
+  Remove all imports that cause a compile error 
+  (" Could not find module 'Module.Name' ")
+  """
+  COULD_NOT_FIND_MODULE = "Could not find module "
+
+  err = subprocess.run(["ghc","-c",path],capture_output=True)\
+        .stderr.decode('utf-8')
+  bad_imports = []
+  for line in err.splitlines():
+    if COULD_NOT_FIND_MODULE in line:
+      bad_imports = bad_imports + [line.split(COULD_NOT_FIND_MODULE)[1][1:-1]]
+
+  new_file = ""
+  with open(path,"r") as file:
+    for line in file:
+      new_line = line
+      for module in bad_imports:
+        if module in line:
+          new_line = "-- " + line
+      new_file = new_file + new_line
+  
+  with open(path,"w") as file:
+    file.write(new_file)
