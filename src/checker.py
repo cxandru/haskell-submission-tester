@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 #coding=utf-8
-
 import os, subprocess, sys, resource, re
 from tasty_xml2msg import xml_to_corrector_string
 from os.path import join, isfile, isdir, basename, exists, islink
@@ -35,9 +34,7 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     if isfile(executed_target) or islink(executed_target): os.remove(executed_target)
     #we copy bc stack doesn't like symlinks.
     copyfile(abs_path_to_exc, executed_target)
-
-    # remove problematic imports
-    removeBadImports(executed_target) 
+ 
 
     #pushd
     prev_dir= os.getcwd()
