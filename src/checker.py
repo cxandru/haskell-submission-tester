@@ -15,7 +15,7 @@ import re
 def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, intermediate_dir, stack_project_root_path):
     '''grade the given exercise for the given submission by copying it to the stack_project_root_path,
     stack testing it there, and writing the results to a msg file with the name of
-    the exercise in itermediate_dir/submission/. 
+    the exercise in itermediate_dir/submission/.
     Return an error_string if one occured, None otherwise.
     '''
     exc_name,subexc_name = exercise
@@ -23,7 +23,7 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     output = join(intermediate_dir, submission, exercise_name)
     xml_file = output+'.xml'
     msg_file = output+'.msg'
-    
+
     # stack test the project where the test and reference Solution are in the test dir
     # while homework is in src. The allowed packages are specified in package.yaml.
     # src has ghc-option -XSafe.
@@ -34,7 +34,7 @@ def gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, inte
     if isfile(executed_target) or islink(executed_target): os.remove(executed_target)
     #we copy bc stack doesn't like symlinks.
     copyfile(abs_path_to_exc, executed_target)
- 
+
 
     #pushd
     prev_dir= os.getcwd()
@@ -89,14 +89,14 @@ def extract_err(stack_build_stderr_output):
 #source (modified): https://stackoverflow.com/questions/36576216/apply-control-characters-to-a-string-python
 def applyBckspcChars(input_string):
     """
-    apply the backspace control character, otherwise output would contain ^H escape sequences. 
+    apply the backspace control character, otherwise output would contain ^H escape sequences.
     The shell seems to do this at some point before piping output to a file.
     """
     # Initial state
     # String is stored as a list because
     # python forbids the modification of
     # a string
-    displayed_string = [] 
+    displayed_string = []
     cursor_position = 0
 
     # Loop on our input (transitions sequence)
@@ -109,7 +109,7 @@ def applyBckspcChars(input_string):
         # Alphanumeric transition
         else:
             # Add the character to the string
-            displayed_string[cursor_position:cursor_position+1] = character 
+            displayed_string[cursor_position:cursor_position+1] = character
             # Move the cursor forward
             cursor_position += 1
 
