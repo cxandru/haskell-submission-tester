@@ -16,9 +16,9 @@ import logging
 logging.basicConfig(level=logging.NOTSET)
 ######################################
 
-def resetStaticTest(reference_stack_projects_dir, stack_projects_dir, stack_project_root):
+def resetStaticTest(reference_stack_projects_dir, test_execution_dir, stack_project_root):
     """ re-import the specified testing project from the reference dir to the actual """
-    actual_project = join(stack_projects_dir,stack_project_root)
+    actual_project = join(test_execution_dir,stack_project_root)
     if isdir(actual_project) :
         rmtree(actual_project)
         logging.info("Removing " + actual_project)
@@ -123,9 +123,9 @@ def setup_dir(base_dir, submissions, reference_stack_projects_dir, exc_to_subexc
 def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack_names_d_eval_file):
     """
     If the directories don't already exist
-    Copies the submissions_dir to dirs 'Intermediate_Files', 'Results', located in
+    Copies the `submissions_dir` to dirs 'Intermediate_Files', 'Results', located in
     submissions_dir/.. ;  
-    Copies the stack_projects_dir to 'Tests' in
+    Copies the `reference_stack_projects_dir` to 'Test_Execution' in
     submissions_dir/.. ;
     Normalizes all to-be-tested .hs files in 'Intermediate_Files';
     evaluates the exc_to_subexc_and_stack_names_d_eval_file to a dictionary;
@@ -135,7 +135,7 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
         root_dir = dirname(submissions_dir)
         intermediate_dir = join(root_dir,'Intermediate_Files')
         results_dir = join(root_dir, 'Results')
-        stack_projects_dir = join(root_dir, 'Test_Execution')
+        test_execution_dir = join(root_dir, 'Test_Execution')
 
         if not isdir(results_dir): copytree(submissions_dir, results_dir)
         exc_to_subexc_and_stack_names_d = exc_to_subexc_and_stack_names_dFunc(exc_to_subexc_and_stack_names_d_eval_file)
@@ -150,17 +150,17 @@ def setup(submissions_dir, reference_stack_projects_dir, exc_to_subexc_and_stack
             for excList_project in excList_projects:
               _el, project = excList_project
               #Don't copy tests to test execution if tests dir exists
-              if not isdir(join(stack_projects_dir, project)):
-                  copytree(join(reference_stack_projects_dir, project), join(stack_projects_dir, project))
+              if not isdir(join(test_execution_dir, project)):
+                  copytree(join(reference_stack_projects_dir, project), join(test_execution_dir, project))
 
-        return ExerciseGradingContext(intermediate_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_names_d)
+        return ExerciseGradingContext(intermediate_dir, results_dir, reference_stack_projects_dir, test_execution_dir, exc_to_subexc_and_stack_names_d)
     except Exception as e:
         logging.error(e)
         rmtree(intermediate_dir)
 
 
 class ExerciseGradingContext:
-    def __init__(self, intermediate_normalized_dir, results_dir, reference_stack_projects_dir, stack_projects_dir, exc_to_subexc_and_stack_names_d):
+    def __init__(self, intermediate_normalized_dir, results_dir, reference_stack_projects_dir, test_execution_dir, exc_to_subexc_and_stack_names_d):
         """
         •intermediate_normalized_dir: Submissions in this dir have the 
         name specified in the exc_to_…_d, with module header S. Special splices/removes of imports not yet supported.
@@ -168,16 +168,16 @@ class ExerciseGradingContext:
         •results_dir: Same structure as intermediate_normalized_dir, only with original files.
         here the bewertung_%.txt files reside where the content of .msg files is dumped 
         after execution of all tests.
-        •stack_projects_dir: Here all submissions are symlinked to the S.hs file in the src dir
+        •test_execution_dir: Here all submissions are symlinked to the S.hs file in the src dir
         then the test with the specific subexc name is executed. 
         •exc_to_subexc_and_stack_name_d: This dictionary tells us which submission files
         should be tested by mapping their name to a list of subexc_names and the the 
-        stack_project_root for this exercise, relative to stack_projects_dir.
+        stack_project_root for this exercise, relative to test_execution_dir.
         """
         self.intermediate_normalized_dir = intermediate_normalized_dir
         self.results_dir = results_dir
         self.reference_stack_projects_dir = reference_stack_projects_dir
-        self.stack_projects_dir = stack_projects_dir
+        self.test_execution_dir = test_execution_dir
         
         self.exc_to_subexc_and_stack_names_d = exc_to_subexc_and_stack_names_d
 
@@ -208,7 +208,7 @@ class ExerciseGradingContext:
             if isfile(join(self.intermediate_normalized_dir,submission,exc_name+subexc_name+'.msg')):
                 logging.info("Skipping "+abs_path_to_exc)
                 continue
-            maybeErr = gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, self.intermediate_normalized_dir, join(self.stack_projects_dir, stack_project_root))
+            maybeErr = gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, self.intermediate_normalized_dir, join(self.test_execution_dir, stack_project_root))
             if(maybeErr):
                 logging.info(maybeErr + "in submission " + abs_path_to_exc)
             else:
@@ -221,7 +221,7 @@ class ExerciseGradingContext:
         resetExcStatic(self.intermediate_normalized_dir,self.subm_to_ep_d.keys(),exercise)
 
     def resetTest(self,stack_project_root):
-        resetStaticTest(self.reference_stack_projects_dir,self.stack_projects_dir, stack_project_root)
+        resetStaticTest(self.reference_stack_projects_dir,self.test_execution_dir, stack_project_root)
 
     def gradeAllExcAndWriteOut(self):
         for exc in self.exc_to_sp_d.keys():
