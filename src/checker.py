@@ -82,8 +82,8 @@ def extract_err(stack_build_stderr_output):
     elif re.search("exited with: ExitFailure \(-9\)",stack_build_stderr_output):
         return "CPU time or Memory limits exceeded. Probably bottomless recursion."
     else: return """The compilation error extraction regex didn't match on this output.
-    Please report this error at https://github.com/cxandru/haskell-submission-tester.
-    This was the raw stderr: (Please attach this in your issue):
+    Please report this error at https://github.com/cxandru/haskell-submission-tester/issues.
+    This was the raw stderr: (Please attach this (anonymized) in your issue):
     """ + stack_build_stderr_output
 
 #source (modified): https://stackoverflow.com/questions/36576216/apply-control-characters-to-a-string-python
