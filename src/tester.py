@@ -29,9 +29,9 @@ def resetStaticTest(reference_stack_projects_dir, test_execution_dir, stack_proj
 
 def resetExcStatic(intermediate_dir, submissions, exercise):
     """ per-exercise reset"""
-    exc_name,subexc_name = exercise
-    exc_name = exc_name + subexc_name
-    files = [glob(join(intermediate_dir,submission, exc_name+'.msg')) + glob(join(intermediate_dir,submission, exc_name+'.xml')) for submission in submissions]
+    exc_module_name,subexc_name = exercise
+    exc_module_name = exc_module_name + subexc_name
+    files = [glob(join(intermediate_dir,submission, exc_module_name+'.msg')) + glob(join(intermediate_dir,submission, exc_module_name+'.xml')) for submission in submissions]
     for f in chain.from_iterable(files):
         if isfile(f):
             logging.info(f)
@@ -198,14 +198,14 @@ class ExerciseGradingContext:
         """
         Grades this exc for all submission that have it.
         """
-        exc_name,subexc_name = exercise
-        subexcs2roots = self.exc_to_subexc_and_stack_names_d[exc_name]
+        exc_module_name,subexc_name = exercise
+        subexcs2roots = self.exc_to_subexc_and_stack_names_d[exc_module_name]
         stack_project_root = [root for subexcs,root in subexcs2roots if subexc_name in subexcs][0]
         for key in self.exc_to_sp_d[exercise]:
             submission, abs_path_to_exc = key
             #skip files for which we already have generated a msg file.
             #if this is not wanted, reset should be called (per exercise).
-            if isfile(join(self.intermediate_normalized_dir,submission,exc_name+subexc_name+'.msg')):
+            if isfile(join(self.intermediate_normalized_dir,submission,exc_module_name+subexc_name+'.msg')):
                 logging.info("Skipping "+abs_path_to_exc)
                 continue
             maybeErr = gradeExcForSubmissionRetMaybeErr(exercise, submission, abs_path_to_exc, self.intermediate_normalized_dir, join(self.test_execution_dir, stack_project_root))
@@ -238,8 +238,8 @@ class ExerciseGradingContext:
     def concatMsgsToFinalAndRepaceResFeedbackFile(self,submission):
         allMsgs=""
         for exercise in self.exc_to_sp_d.keys():
-            exc_name, subexc_name = exercise
-            msg_f = join(self.intermediate_normalized_dir, submission, exc_name+subexc_name+'.msg')
+            exc_module_name, subexc_name = exercise
+            msg_f = join(self.intermediate_normalized_dir, submission, exc_module_name+subexc_name+'.msg')
             if isfile(msg_f): #TODO: do we write if a student didn't hand in a file?
                 with open(msg_f, mode='r') as f_in:
                     allMsgs += "\n"+ f_in.read()
@@ -266,8 +266,8 @@ class ExerciseGradingContext:
     def concatMsgsToFinalAndRepaceResBewertungFile(self,submission):
         allMsgs=""
         for exercise in self.exc_to_sp_d.keys(): #+glob(join(self.intermediate_normalized_dir,submission,'*.xml')
-            exc_name, subexc_name = exercise
-            msg_f = join(self.intermediate_normalized_dir, submission, exc_name+subexc_name+'.msg')
+            exc_module_name, subexc_name = exercise
+            msg_f = join(self.intermediate_normalized_dir, submission, exc_module_name+subexc_name+'.msg')
             if isfile(msg_f): #TODO: do we write if a student didn't hand in a file?
                 with open(msg_f, mode='r') as f_in:
                     allMsgs += "\n"+ f_in.read()
