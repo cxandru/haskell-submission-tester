@@ -229,4 +229,12 @@ actually the case it would probably be best to remove all pragmas.
 them. Alternatively, we remember the last line we find a pragma at,
 then insert the module header below that. If we had semantic parsing
 we could distinguish the start of the first code.
-==
+
+# 2022-11-21
+`    search_result = re.search(r'^(?:[^\n]+?)\.hs:\d+?:\d+?: error: ?(.+?)^Progress ',stack_build_stderr_output,flags=re.DOTALL | re.MULTILINE)`
+^^This doesn't seem to match how compilation errors are output anymore (Progress?). So currently all errors except for bottomless recursion say that the regex didn't match the output. I should have written a test for this, but I didn't 🤪.
+
+[Remove unused external imports · Issue #4 · cxandru/haskell-submission-tester](https://github.com/cxandru/haskell-submission-tester/issues/4)
+I'm forced to use a continuation (as opposed to, say, a `do…while` loop) because exceptions are involved in the control flow.
+
+Hmm. I'm adjusting the code to not modify the file directly to better test this. Is that good or is this akin to mocking, akin to what Tom Sydney advocates against?
